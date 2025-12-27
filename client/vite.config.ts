@@ -8,7 +8,13 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@assets": path.resolve(__dirname, "./src/assets"),
+      // Fallback for the shared folder
       "@shared": path.resolve(__dirname, "../shared"),
     },
+  },
+  // --- THE FIX IS HERE ---
+  define: {
+    // This tells the phone: "You are the global computer now."
+    global: "window",
   },
 });
