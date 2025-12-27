@@ -19,34 +19,21 @@ import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { AlertCircle } from "lucide-react";
 
-// --- SAFETY NET COMPONENT ---
+// --- SAFETY NET ---
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("App Crash:", error, errorInfo);
-  }
-
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) { console.error("App Crash:", error, errorInfo); }
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-6">
           <div className="max-w-md w-full bg-card border border-destructive/20 rounded-lg p-6 shadow-lg text-center">
             <h2 className="text-xl font-bold text-destructive mb-2">Something went wrong</h2>
-            <p className="text-muted-foreground mb-4 text-sm">{this.state.error?.message}</p>
-             <button 
-              onClick={() => window.location.reload()}
-              className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium"
-            >
-              Reload Application
-            </button>
+             <button onClick={() => window.location.reload()} className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium">Reload Application</button>
           </div>
         </div>
       );
@@ -55,10 +42,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-// --- APP ROUTING ---
+// --- ROUTER ---
 function Router() {
   const { isConnected, walletAddress, connect } = useWallet();
-
   return (
     <Switch>
       <Route path="/" component={() => <Home isConnected={isConnected} onConnect={connect} />} />
@@ -74,37 +60,28 @@ function Router() {
 
 function AppContent() {
   const { isConnected, walletAddress, anonymousId, connect, disconnect } = useWallet();
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Header
-        isConnected={isConnected}
-        walletAddress={walletAddress}
-        anonymousId={anonymousId}
-        onConnect={connect}
-        onDisconnect={disconnect}
-      />
-      <main className="flex-1">
-        <Router />
-      </main>
+      <Header isConnected={isConnected} walletAddress={walletAddress} anonymousId={anonymousId} onConnect={connect} onDisconnect={disconnect} />
+      <main className="flex-1"> <Router /> </main>
       <PWAInstallPrompt />
     </div>
   );
 }
 
-// --- MAIN APP ---
+// --- MAIN ---
 export default function App() {
-  // FIX: Automatically use the current URL.
-  // This prevents "Deployment Not Found" because it never guesses the wrong link.
-  const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://b3trsurve.vercel.app';
+  // THE FIX: We force the Production URL even if you are on a Preview link.
+  // This tricks the wallet into connecting without asking for a Vercel login.
+  const PRODUCTION_URL = 'https://b3trsurve-final.vercel.app';
 
   const walletConnectOptions: WalletConnectOptions = {
-    projectId: 'a0c810d797170887e14d87272895f472', 
+    projectId: 'a0c810d797170887e14d87272895f472',
     metadata: {
       name: 'B3TRSURVE',
       description: 'Verifiable Market Research',
-      url: currentUrl, 
-      icons: [`${currentUrl}/icon-192.png`],
+      url: PRODUCTION_URL, 
+      icons: [`${PRODUCTION_URL}/icon-192.png`],
     },
   };
 
@@ -113,15 +90,8 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light">
           <TooltipProvider>
-            <DAppKitProvider
-              node="https://mainnet.vechain.org/"
-              usePersistence={true}
-              logLevel="ERROR" 
-              walletConnectOptions={walletConnectOptions}
-            >
-              <WalletProvider>
-                <AppContent />
-              </WalletProvider>
+            <DAppKitProvider node="https://mainnet.vechain.org/" usePersistence={true} logLevel="ERROR" walletConnectOptions={walletConnectOptions}>
+              <WalletProvider> <AppContent /> </WalletProvider>
             </DAppKitProvider>
             <Toaster />
           </TooltipProvider>
