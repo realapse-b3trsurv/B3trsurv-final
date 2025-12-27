@@ -19,33 +19,21 @@ import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { AlertCircle } from "lucide-react";
 
-// --- SAFETY NET (Prevents White Screen) ---
+// --- SAFETY NET ---
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("App Crash:", error, errorInfo);
-  }
-
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) { console.error("App Crash:", error, errorInfo); }
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-6">
-          <div className="max-w-md w-full bg-card border border-destructive/20 rounded-lg p-6 shadow-lg">
+          <div className="max-w-md w-full bg-card border border-destructive/20 rounded-lg p-6 shadow-lg text-center">
             <h2 className="text-xl font-bold text-destructive mb-2">Something went wrong</h2>
-             <button 
-              onClick={() => window.location.reload()}
-              className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium"
-            >
-              Reload Application
-            </button>
+             <button onClick={() => window.location.reload()} className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium">Reload Application</button>
           </div>
         </div>
       );
@@ -74,16 +62,8 @@ function AppContent() {
   const { isConnected, walletAddress, anonymousId, connect, disconnect } = useWallet();
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Header
-        isConnected={isConnected}
-        walletAddress={walletAddress}
-        anonymousId={anonymousId}
-        onConnect={connect}
-        onDisconnect={disconnect}
-      />
-      <main className="flex-1">
-        <Router />
-      </main>
+      <Header isConnected={isConnected} walletAddress={walletAddress} anonymousId={anonymousId} onConnect={connect} onDisconnect={disconnect} />
+      <main className="flex-1"> <Router /> </main>
       <PWAInstallPrompt />
     </div>
   );
@@ -96,7 +76,7 @@ export default function App() {
     metadata: {
       name: 'B3TRSURVE',
       description: 'Verifiable Market Research',
-      // CRITICAL FIX: This URL tells the wallet you are a real app
+      // FIX: Hardcoded Public URL prevents "Log in to Vercel" screen
       url: 'https://b3trsurve-final.vercel.app', 
       icons: ['https://b3trsurve-final.vercel.app/icon-192.png'],
     },
@@ -107,15 +87,8 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light">
           <TooltipProvider>
-            <DAppKitProvider
-              node="https://mainnet.vechain.org/"
-              usePersistence={true}
-              logLevel="ERROR" 
-              walletConnectOptions={walletConnectOptions}
-            >
-              <WalletProvider>
-                <AppContent />
-              </WalletProvider>
+            <DAppKitProvider node="https://mainnet.vechain.org/" usePersistence={true} logLevel="ERROR" walletConnectOptions={walletConnectOptions}>
+              <WalletProvider> <AppContent /> </WalletProvider>
             </DAppKitProvider>
             <Toaster />
           </TooltipProvider>
