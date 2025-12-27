@@ -11,22 +11,20 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "../shared"),
     },
   },
-  define: {
-    // Double-check fix for global
-    global: "window",
-  },
-  // This fixes the "Large File" warning
   build: {
-    chunkSizeWarningLimit: 1000,
+    // 1. FIX: Increase limit to 2000kb so the warning disappears
+    chunkSizeWarningLimit: 2000, 
     rollupOptions: {
       output: {
         manualChunks: {
-          // Split vendor files into their own chunk
+          // 2. Optimization: Split the heavy crypto libraries
           vendor: ['react', 'react-dom', 'wouter'],
-          // Split heavy crypto stuff
-          vechain: ['@vechain/dapp-kit', '@vechain/dapp-kit-react'],
+          dapp: ['@vechain/dapp-kit', '@vechain/dapp-kit-react'],
         },
       },
     },
+  },
+  define: {
+    global: "window",
   },
 });
