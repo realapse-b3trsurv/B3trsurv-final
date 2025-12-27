@@ -6,16 +6,22 @@
     <title>B3TRSURVE</title>
     
     <script>
-      // 1. Fix Global
       window.global = window;
-      
-      // 2. Fix Buffer (The Fake-Out)
-      // We create a dummy object so the app doesn't crash on load
-      window.Buffer = {
-        isBuffer: function() { return false; },
-        from: function(data) { return data; },
-        alloc: function(size) { return new Array(size); }
+      window.process = {
+        env: { DEBUG: undefined },
+        version: '',
       };
+    </script>
+
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    
+    <script>
+      // Map the downloaded tool to the window so the app can find it
+      if (window.buffer) {
+        window.Buffer = window.buffer.Buffer;
+      } else {
+        console.log("Buffer loading...");
+      }
     </script>
     
   </head>
