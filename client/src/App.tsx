@@ -1,3 +1,4 @@
+import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -16,7 +17,53 @@ import TakeSurvey from "@/pages/take-survey";
 import Dashboard from "@/pages/dashboard";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
+import { AlertCircle } from "lucide-react";
 
+// --- SAFETY NET COMPONENT ---
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("App Crash:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-6">
+          <div className="max-w-md w-full bg-card border border-destructive/20 rounded-lg p-6 shadow-lg">
+            <div className="flex items-center gap-3 text-destructive mb-4">
+              <AlertCircle className="h-8 w-8" />
+              <h2 className="text-xl font-bold">Something went wrong</h2>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              The application encountered an error while loading. This usually happens due to wallet configuration.
+            </p>
+            <div className="bg-muted p-3 rounded text-xs font-mono mb-6 overflow-auto max-h-32">
+              {this.state.error?.message || "Unknown Error"}
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium hover:bg-primary/90"
+            >
+              Reload Application
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// --- APP ROUTING ---
 function Router() {
   const { isConnected, walletAddress, connect } = useWallet();
 
@@ -53,35 +100,38 @@ function AppContent() {
   );
 }
 
+// --- MAIN APP ---
 export default function App() {
-  // WalletConnect configuration for mobile wallet support
+  // Safe wallet options setup
   const walletConnectOptions: WalletConnectOptions = {
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '8848d6c1b95de0d4e1e8e7e8c8a8f8b5',
+    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'a0c810d797170887e14d87272895f472', // Updated generic ID
     metadata: {
       name: 'B3TRSURVE',
-      description: 'Blockchain-verified survey platform with token rewards',
-      url: typeof window !== 'undefined' ? window.location.origin : 'https://b3trsurve.com',
-      icons: [typeof window !== 'undefined' ? `${window.location.origin}/icon-192.png` : 'https://b3trsurve.com/icon-192.png'],
+      description: 'Blockchain-verified survey platform',
+      url: typeof window !== 'undefined' ? window.location.origin : 'https://b3trsurve.vercel.app',
+      icons: [typeof window !== 'undefined' ? `${window.location.origin}/icon-192.png` : 'https://b3trsurve.vercel.app/icon-192.png'],
     },
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <DAppKitProvider
-            node="https://mainnet.vechain.org/"
-            usePersistence={true}
-            logLevel="DEBUG"
-            walletConnectOptions={walletConnectOptions}
-          >
-            <WalletProvider>
-              <AppContent />
-            </WalletProvider>
-          </DAppKitProvider>
-          <Toaster />
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <DAppKitProvider
+              node="https://mainnet.vechain.org/"
+              usePersistence={true}
+              logLevel="ERROR" 
+              walletConnectOptions={walletConnectOptions}
+            >
+              <WalletProvider>
+                <AppContent />
+              </WalletProvider>
+            </DAppKitProvider>
+            <Toaster />
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
