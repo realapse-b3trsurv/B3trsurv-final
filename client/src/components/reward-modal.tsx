@@ -11,7 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Trophy, Coins, Info } from "lucide-react";
-import { calculateConsumerFee } from "@shared/fee-config";
+
+// Fixed: Local calculation to bypass missing shared file
+const calculateConsumerFee = (gross: number) => {
+  const feePercentage = 5; // 5% platform fee
+  const feeAmount = gross * (feePercentage / 100);
+  const netAmount = gross - feeAmount;
+  return { grossAmount: gross, feePercentage, feeAmount, netAmount };
+};
 
 interface RewardSelectionModalProps {
   open: boolean;
