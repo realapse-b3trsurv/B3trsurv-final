@@ -12,12 +12,14 @@ export default defineConfig({
     },
   },
   build: {
-    // 1. FIX: Increase limit to 2000kb so the warning disappears
-    chunkSizeWarningLimit: 2000, 
+    chunkSizeWarningLimit: 2000,
+    commonjsOptions: {
+      // THIS IS THE FIX: Converts 'require' to valid browser code
+      transformMixedEsModules: true, 
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          // 2. Optimization: Split the heavy crypto libraries
           vendor: ['react', 'react-dom', 'wouter'],
           dapp: ['@vechain/dapp-kit', '@vechain/dapp-kit-react'],
         },
