@@ -10,17 +10,41 @@
       window.global = window;
       
       // 2. Fix Process
-      window.process = { env: { DEBUG: undefined }, version: '' };
-      
-      // 3. Fix Buffer (The Fake-Out)
-      // We create a dummy object so the app STARTS immediately.
-      // It will load the real one later if needed.
-      window.Buffer = {
-        isBuffer: function() { return false; },
-        from: function(data) { return data; },
-        alloc: function(size) { return new Array(size); },
-        concat: function() { return []; }
+      window.process = { 
+        env: { DEBUG: undefined }, 
+        version: '',
+        nextTick: function(cb) { setTimeout(cb, 0); }
       };
+      
+      // 3. Fix Buffer (Manually written so it loads INSTANTLY)
+      // This mimics the real tool exactly enough to fool the wallet
+      const Buffer = {
+        isBuffer: function(obj) { 
+          return obj != null && obj.constructor != null && 
+                 typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj); 
+        },
+        from: function(data) { 
+          if (typeof data === 'string') {
+            const arr = new Uint8Array(data.length);
+            for (let i = 0; i < data.length; i++) arr[i] = data.charCodeAt(i);
+            return arr;
+          }
+          return new Uint8Array(data); 
+        },
+        alloc: function(size) { return new Uint8Array(size); },
+        concat: function(list) {
+          let length = 0;
+          for (let i = 0; i < list.length; i++) length += list[i].length;
+          const result = new Uint8Array(length);
+          let offset = 0;
+          for (let i = 0; i < list.length; i++) {
+            result.set(list[i], offset);
+            offset += list[i].length;
+          }
+          return result;
+        }
+      };
+      window.Buffer = Buffer;
     </script>
     
   </head>
