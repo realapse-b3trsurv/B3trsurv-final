@@ -19,7 +19,7 @@ import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { AlertCircle } from "lucide-react";
 
-// --- SAFETY NET COMPONENT (Prevents White Screen) ---
+// --- SAFETY NET (Prevents White Screen) ---
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -39,19 +39,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-6">
           <div className="max-w-md w-full bg-card border border-destructive/20 rounded-lg p-6 shadow-lg">
-            <div className="flex items-center gap-3 text-destructive mb-4">
-              <AlertCircle className="h-8 w-8" />
-              <h2 className="text-xl font-bold">Something went wrong</h2>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              The application encountered an error while loading.
-            </p>
-            <div className="bg-muted p-3 rounded text-xs font-mono mb-6 overflow-auto max-h-32">
-              {this.state.error?.message || "Unknown Error"}
-            </div>
-            <button 
+            <h2 className="text-xl font-bold text-destructive mb-2">Something went wrong</h2>
+             <button 
               onClick={() => window.location.reload()}
-              className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium hover:bg-primary/90"
+              className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium"
             >
               Reload Application
             </button>
@@ -63,10 +54,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-// --- APP ROUTING ---
+// --- ROUTER ---
 function Router() {
   const { isConnected, walletAddress, connect } = useWallet();
-
   return (
     <Switch>
       <Route path="/" component={() => <Home isConnected={isConnected} onConnect={connect} />} />
@@ -82,9 +72,8 @@ function Router() {
 
 function AppContent() {
   const { isConnected, walletAddress, anonymousId, connect, disconnect } = useWallet();
-
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header
         isConnected={isConnected}
         walletAddress={walletAddress}
@@ -100,15 +89,14 @@ function AppContent() {
   );
 }
 
-// --- MAIN APP ---
+// --- MAIN ---
 export default function App() {
-  // Safe wallet options setup
   const walletConnectOptions: WalletConnectOptions = {
-    projectId: 'a0c810d797170887e14d87272895f472', // Hardcoded ID for safety
+    projectId: 'a0c810d797170887e14d87272895f472',
     metadata: {
       name: 'B3TRSURVE',
-      description: 'Blockchain-verified survey platform',
-      // FIXED: Hardcoded production URL so Wallet shows the correct name
+      description: 'Verifiable Market Research',
+      // CRITICAL FIX: This URL tells the wallet you are a real app
       url: 'https://b3trsurve-final.vercel.app', 
       icons: ['https://b3trsurve-final.vercel.app/icon-192.png'],
     },
