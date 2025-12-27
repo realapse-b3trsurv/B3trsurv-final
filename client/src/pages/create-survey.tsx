@@ -1,163 +1,122 @@
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { z } from "zod";
+import { useWallet } from "@/lib/wallet-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Loader2, Coins } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Trash2, Loader2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Fixed: Define fee locally instead of importing from missing file
-const SURVEY_CREATION_FEE = 50;
-
-const surveySchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  questions: z.array(z.object({
-    text: z.string().min(1, "Question text is required"),
-    type: z.enum(["single", "multiple", "text"]),
-    options: z.array(z.string()).optional(),
-  })).min(1, "At least one question is required"),
-});
-
-type SurveyFormValues = z.infer<typeof surveySchema>;
+import { SurveyStorage } from "@/lib/storage"; // Import our new database
 
 export default function CreateSurvey() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
+  const { isConnected } = useWallet();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Form State
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [rewardPerUser, setRewardPerUser] = useState("10"); // Default reward
+  const [questions, setQuestions] = useState([{ text: "" }]);
+
+  // THE FEES
+  const PLATFORM_FEE = 5; // Fee paid to YOU (The Admin)
   
-  const form = useForm<SurveyFormValues>({
-    resolver: zodResolver(surveySchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      questions: [{ text: "", type: "single", options: ["Yes", "No"] }],
-    },
-  });
+  const handleAddQuestion = () => setQuestions([...questions, { text: "" }]);
+  
+  const handleRemoveQuestion = (idx: number) => {
+    setQuestions(questions.filter((_, i) => i !== idx));
+  };
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "questions",
-  });
+  const handleQuestionChange = (idx: number, val: string) => {
+    const newQ = [...questions];
+    newQ[idx].text = val;
+    setQuestions(newQ);
+  };
 
-  const onSubmit = async (data: SurveyFormValues) => {
-    // Simulation of submission for the demo
-    toast({
-      title: "Survey Created",
-      description: `Success! Fee of ${SURVEY_CREATION_FEE} B3TR would be deducted.`,
-    });
-    // Redirect to dashboard after delay
-    setTimeout(() => setLocation("/dashboard"), 1000);
+  const handleSubmit = async () => {
+    if (!isConnected) {
+      toast({ title: "Wallet Required", description: "Please connect your wallet first.", variant: "destructive" });
+      return;
+    }
+    if (!title || !description) {
+      toast({ title: "Missing Fields", description: "Please fill in title and description.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Simulate Blockchain Transaction
+    setTimeout(() => {
+      // 1. Save to our local database
+      SurveyStorage.add({
+        title,
+        description,
+        reward: Number(rewardPerUser),
+        fee: PLATFORM_FEE,
+        questions
+      });
+
+      setIsLoading(false);
+      toast({ 
+        title: "Survey Created!", 
+        description: `Fee paid: ${PLATFORM_FEE} B3TR. Users will earn ${rewardPerUser} B3TR.` 
+      });
+      setLocation("/marketplace"); // Send user to marketplace to see it
+    }, 2000);
   };
 
   return (
-    <div className="container max-w-3xl py-10 px-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold flex justify-between items-center">
-            Create New Survey
-            <div className="text-sm font-normal bg-primary/10 text-primary px-3 py-1 rounded-full flex items-center gap-2">
-              <Coins className="h-4 w-4" />
-              Cost: {SURVEY_CREATION_FEE} B3TR
+    <div className="container max-w-2xl py-8 px-4">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Create New Survey</h1>
+        <div className="bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium flex flex-col items-end">
+          <span>Platform Fee: {PLATFORM_FEE} B3TR</span>
+          <span className="text-xs opacity-70">(Paid to Admin)</span>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Survey Title</label>
+          <Input placeholder="E.g., Crypto Usage 2025" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Description</label>
+          <Textarea placeholder="What is this survey about?" value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            Reward per Taker (B3TR) <Info className="h-4 w-4 text-muted-foreground" />
+          </label>
+          <Input type="number" value={rewardPerUser} onChange={(e) => setRewardPerUser(e.target.value)} />
+          <p className="text-xs text-muted-foreground">This amount is paid to each person who completes the survey.</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Questions</label>
+            <Button variant="outline" size="sm" onClick={handleAddQuestion}><Plus className="h-4 w-4 mr-2" /> Add</Button>
+          </div>
+          
+          {questions.map((q, idx) => (
+            <div key={idx} className="flex gap-2">
+              <Input placeholder={`Question ${idx + 1}`} value={q.text} onChange={(e) => handleQuestionChange(idx, e.target.value)} />
+              {questions.length > 1 && (
+                <Button variant="ghost" size="icon" onClick={() => handleRemoveQuestion(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              )}
             </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Survey Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="E.g., Consumer Preferences 2025" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          ))}
+        </div>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="What is this survey about?" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Questions</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ text: "", type: "single", options: ["Yes", "No"] })}
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Add Question
-                  </Button>
-                </div>
-
-                {fields.map((field, index) => (
-                  <Card key={field.id} className="p-4 border-dashed">
-                    <div className="flex gap-4 items-start">
-                      <div className="flex-1 space-y-4">
-                        <FormField
-                          control={form.control}
-                          name={`questions.${index}.text`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Question {index + 1}</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-
-              <Button type="submit" size="lg" className="w-full">
-                Publish Survey
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+        <Button className="w-full h-12 text-lg" onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing Blockchain...</> : "Publish Survey & Pay Fee"}
+        </Button>
+      </div>
     </div>
   );
 }
