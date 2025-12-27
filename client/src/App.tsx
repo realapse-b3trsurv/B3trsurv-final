@@ -19,7 +19,7 @@ import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { AlertCircle } from "lucide-react";
 
-// --- SAFETY NET (Prevents White Screen) ---
+// --- SAFETY NET COMPONENT ---
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -40,6 +40,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
         <div className="min-h-screen flex items-center justify-center bg-background p-6">
           <div className="max-w-md w-full bg-card border border-destructive/20 rounded-lg p-6 shadow-lg text-center">
             <h2 className="text-xl font-bold text-destructive mb-2">Something went wrong</h2>
+            <p className="text-muted-foreground mb-4 text-sm">{this.state.error?.message}</p>
              <button 
               onClick={() => window.location.reload()}
               className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium"
@@ -54,7 +55,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-// --- ROUTER ---
+// --- APP ROUTING ---
 function Router() {
   const { isConnected, walletAddress, connect } = useWallet();
 
@@ -93,15 +94,17 @@ function AppContent() {
 
 // --- MAIN APP ---
 export default function App() {
-  // WalletConnect configuration
+  // FIX: Automatically use the current URL.
+  // This prevents "Deployment Not Found" because it never guesses the wrong link.
+  const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://b3trsurve.vercel.app';
+
   const walletConnectOptions: WalletConnectOptions = {
     projectId: 'a0c810d797170887e14d87272895f472', 
     metadata: {
       name: 'B3TRSURVE',
       description: 'Verifiable Market Research',
-      // FIXED: Hardcoded Public URL prevents "Log in to Vercel" screen
-      url: 'https://b3trsurve-final.vercel.app', 
-      icons: ['https://b3trsurve-final.vercel.app/icon-192.png'],
+      url: currentUrl, 
+      icons: [`${currentUrl}/icon-192.png`],
     },
   };
 
