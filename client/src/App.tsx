@@ -71,9 +71,8 @@ function AppContent() {
 
 // --- MAIN ---
 export default function App() {
-  // THE FIX: We force the Production URL even if you are on a Preview link.
-  // This tricks the wallet into connecting without asking for a Vercel login.
-  const PRODUCTION_URL = 'https://b3trsurve-final.vercel.app';
+  // CORRECTED URL: No 'e' in 'surv'
+  const PRODUCTION_URL = 'https://b3trsurv-final.vercel.app';
 
   const walletConnectOptions: WalletConnectOptions = {
     projectId: 'a0c810d797170887e14d87272895f472',
