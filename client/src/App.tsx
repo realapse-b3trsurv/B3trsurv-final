@@ -19,7 +19,7 @@ import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { AlertCircle } from "lucide-react";
 
-// --- SAFETY NET COMPONENT ---
+// --- SAFETY NET COMPONENT (Prevents White Screen) ---
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -44,7 +44,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
               <h2 className="text-xl font-bold">Something went wrong</h2>
             </div>
             <p className="text-muted-foreground mb-4">
-              The application encountered an error while loading. This usually happens due to wallet configuration.
+              The application encountered an error while loading.
             </p>
             <div className="bg-muted p-3 rounded text-xs font-mono mb-6 overflow-auto max-h-32">
               {this.state.error?.message || "Unknown Error"}
@@ -104,7 +104,7 @@ function AppContent() {
 export default function App() {
   // Safe wallet options setup
   const walletConnectOptions: WalletConnectOptions = {
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'a0c810d797170887e14d87272895f472', // Updated generic ID
+    projectId: 'a0c810d797170887e14d87272895f472', // Hardcoded ID for safety
     metadata: {
       name: 'B3TRSURVE',
       description: 'Blockchain-verified survey platform',
