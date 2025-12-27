@@ -108,8 +108,9 @@ export default function App() {
     metadata: {
       name: 'B3TRSURVE',
       description: 'Blockchain-verified survey platform',
-      url: typeof window !== 'undefined' ? window.location.origin : 'https://b3trsurve.vercel.app',
-      icons: [typeof window !== 'undefined' ? `${window.location.origin}/icon-192.png` : 'https://b3trsurve.vercel.app/icon-192.png'],
+      // FIXED: Hardcoded production URL so Wallet shows the correct name
+      url: 'https://b3trsurve-final.vercel.app', 
+      icons: ['https://b3trsurve-final.vercel.app/icon-192.png'],
     },
   };
 
