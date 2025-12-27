@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>B3TRSURVE</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
-    
     <script>
-      // Tells the phone how to use the tool we just downloaded
+      // 1. Fix Global
       window.global = window;
-      window.Buffer = buffer.Buffer;
+      
+      // 2. Fix Buffer (The Fake-Out)
+      // We create a dummy object so the app doesn't crash on load
+      window.Buffer = {
+        isBuffer: function() { return false; },
+        from: function(data) { return data; },
+        alloc: function(size) { return new Array(size); }
+      };
     </script>
     
   </head>
