@@ -1,94 +1,86 @@
-import { Link, useLocation } from "wouter";
-import { WalletButton } from "./wallet-button";
-import { ThemeToggle } from "./theme-toggle";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Database, LayoutDashboard, Plus, User } from "lucide-react";
+import { Wallet, LogOut, Menu } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   isConnected: boolean;
-  walletAddress?: string;
-  anonymousId?: string;
+  walletAddress: string | null;
+  anonymousId: string | null;
   onConnect: () => void;
   onDisconnect: () => void;
 }
 
-export function Header({
-  isConnected,
-  walletAddress,
-  anonymousId,
-  onConnect,
-  onDisconnect,
-}: HeaderProps) {
-  const [location] = useLocation();
+export function Header({ isConnected, walletAddress, onConnect, onDisconnect }: HeaderProps) {
+  
+  // Helper to shorten address (e.g. 0x123...abc)
+  const shortenAddress = (addr: string | null) => {
+    if (!addr) return "";
+    return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
+  };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2" data-testid="link-home">
-            <Database className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">B3TRSURVE</span>
-          </Link>
+        {/* LOGO */}
+        <Link href="/">
+          <a className="flex items-center gap-2 font-bold text-xl text-primary cursor-pointer hover:opacity-80 transition-opacity">
+            <span className="hidden sm:inline">B3TRSURVE</span>
+            <span className="sm:hidden">B3TR</span>
+          </a>
+        </Link>
 
-          {isConnected && (
-            <nav className="hidden md:flex items-center gap-2">
-              <Button
-                asChild
-                variant={location === "/marketplace" ? "secondary" : "ghost"}
-                size="sm"
-                data-testid="link-marketplace"
-              >
-                <Link href="/marketplace">Marketplace</Link>
-              </Button>
-              <Button
-                asChild
-                variant={location === "/dashboard" ? "secondary" : "ghost"}
-                size="sm"
-                data-testid="link-dashboard"
-                className="gap-2"
-              >
-                <Link href="/dashboard">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant={location === "/create-survey" ? "secondary" : "ghost"}
-                size="sm"
-                data-testid="link-create-survey"
-                className="gap-2"
-              >
-                <Link href="/create-survey">
-                  <Plus className="h-4 w-4" />
-                  Create Survey
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant={location === "/profile" ? "secondary" : "ghost"}
-                size="sm"
-                data-testid="link-profile"
-                className="gap-2"
-              >
-                <Link href="/profile">
-                  <User className="h-4 w-4" />
-                  Profile
-                </Link>
-              </Button>
-            </nav>
-          )}
-        </div>
-
+        {/* NAVIGATION & WALLET */}
         <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <WalletButton
-            isConnected={isConnected}
-            walletAddress={walletAddress}
-            anonymousId={anonymousId}
-            onConnect={onConnect}
-            onDisconnect={onDisconnect}
-          />
+          {isConnected ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 max-w-[150px] sm:max-w-none">
+                  <Wallet className="h-4 w-4 shrink-0" />
+                  {/* Truncate address on mobile, show full on desktop */}
+                  <span className="truncate">
+                    {shortenAddress(walletAddress)}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="cursor-pointer" onClick={onDisconnect}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Disconnect
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button size="sm" onClick={onConnect} className="gap-2">
+              <Wallet className="h-4 w-4" />
+              Connect
+            </Button>
+          )}
+
+          {/* MOBILE MENU */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <Link href="/create-survey">
+                <DropdownMenuItem className="cursor-pointer">Create Survey</DropdownMenuItem>
+              </Link>
+              <Link href="/marketplace">
+                <DropdownMenuItem className="cursor-pointer">Marketplace</DropdownMenuItem>
+              </Link>
+              <Link href="/dashboard">
+                <DropdownMenuItem className="cursor-pointer">Dashboard</DropdownMenuItem>
+              </Link>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
