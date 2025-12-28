@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useWallet as useDAppKitWallet } from "@vechain/dapp-kit-react";
 import { useToast } from "@/hooks/use-toast";
 
-// 1. Define the shape of our wallet tools
 interface WalletContextType {
   isConnected: boolean;
   walletAddress: string | null;
@@ -11,43 +10,48 @@ interface WalletContextType {
   disconnect: () => void;
 }
 
-// 2. Create the Context
 const WalletContext = createContext<WalletContextType | null>(null);
 
-// 3. Create the Provider (The Engine)
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { account, connect, disconnect: dAppKitDisconnect } = useDAppKitWallet();
+  const { account, connect: dAppConnect, disconnect: dAppDisconnect } = useDAppKitWallet();
   const [address, setAddress] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Sync with VeChain Kit
   useEffect(() => {
-    if (account) {
-      setAddress(account);
-    } else {
-      setAddress(null);
-    }
+    // Sync local state with VeChain kit
+    setAddress(account || null);
   }, [account]);
 
-  // --- THE HARD DISCONNECT FIX ---
+  // --- FORCE CONNECT FIX ---
+  const handleConnect = async () => {
+    try {
+      // If we are stuck, try to disconnect first
+      if (!account) {
+        localStorage.removeItem("walletconnect"); 
+      }
+      if (dAppConnect) {
+        dAppConnect();
+      }
+    } catch (e) {
+      console.error("Connect failed:", e);
+    }
+  };
+
+  // --- HARD DISCONNECT FIX ---
   const handleDisconnect = async () => {
     try {
-      // 1. Tell VeChain to disconnect
-      if (dAppKitDisconnect) {
-        await dAppKitDisconnect();
+      if (dAppDisconnect) {
+        await dAppDisconnect();
       }
-      // 2. Clear Local Storage (Hard Reset)
+      // Wipe storage to ensure clean state
       localStorage.removeItem("user_wallet");
-      localStorage.removeItem("walletconnect"); // Clears WalletConnect session
-      
-      // 3. Wipe State
+      localStorage.removeItem("walletconnect");
       setAddress(null);
       
       toast({
         title: "Wallet Disconnected",
-        description: "You have been logged out securely.",
+        description: "You have been logged out.",
       });
-      
     } catch (error) {
       console.error("Disconnect error:", error);
     }
@@ -59,7 +63,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         isConnected: !!address,
         walletAddress: address,
         anonymousId: address ? `anon-${address.slice(-4)}` : null,
-        connect,
+        connect: handleConnect, // Use our safe connect function
         disconnect: handleDisconnect,
       }}
     >
@@ -68,7 +72,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// 4. THE EXPORT (This was missing and caused the crash!)
 export function useWallet() {
   const context = useContext(WalletContext);
   if (!context) {
