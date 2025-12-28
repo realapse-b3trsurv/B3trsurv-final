@@ -10,17 +10,24 @@ import { SurveyStorage } from "@/lib/storage";
 
 export default function CreateSurvey() {
   const [, setLocation] = useLocation();
-  const { isConnected, connect } = useWallet(); // Get connect function
+  const { isConnected, connect } = useWallet();
   const { toast } = useToast();
+  
+  const [isConnecting, setIsConnecting] = useState(false); // New visual state
   const [isLoading, setIsLoading] = useState(false);
-
-  // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [rewardPerUser, setRewardPerUser] = useState("10"); 
   const [questions, setQuestions] = useState([{ text: "" }]);
-
   const PLATFORM_FEE = 5; 
+
+  // --- CONNECT BUTTON HANDLER ---
+  const handleConnectClick = () => {
+    setIsConnecting(true); // Show feedback immediately
+    connect();
+    // Reset button after 3 seconds (in case user cancels modal)
+    setTimeout(() => setIsConnecting(false), 3000);
+  };
   
   const handleAddQuestion = () => setQuestions([...questions, { text: "" }]);
   
@@ -64,7 +71,7 @@ export default function CreateSurvey() {
     }, 2000);
   };
 
-  // --- THE FIX: Block the form if not connected ---
+  // --- STUCK STATE FIX: Visual Feedback ---
   if (!isConnected) {
     return (
       <div className="container max-w-2xl py-12 px-4 flex flex-col items-center text-center space-y-6">
@@ -75,8 +82,12 @@ export default function CreateSurvey() {
         <p className="text-muted-foreground max-w-md">
           You need to connect your VeChain wallet to create surveys, pay fees, and reward users on the blockchain.
         </p>
-        <Button size="lg" onClick={connect} className="gap-2">
-          Connect Wallet to Start
+        <Button size="lg" onClick={handleConnectClick} className="gap-2 min-w-[200px]">
+          {isConnecting ? (
+            <>Opening Wallet...</>
+          ) : (
+            <>Connect Wallet to Start</>
+          )}
         </Button>
       </div>
     );
