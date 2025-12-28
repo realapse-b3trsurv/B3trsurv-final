@@ -18,40 +18,37 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Sync local state with VeChain kit
     setAddress(account || null);
   }, [account]);
 
-  // --- FORCE CONNECT FIX ---
-  const handleConnect = async () => {
+  // --- THE AGGRESSIVE CONNECT FIX ---
+  const handleConnect = () => {
     try {
-      // If we are stuck, try to disconnect first
+      // 1. Force clear any "ghost" sessions that might be blocking the modal
       if (!account) {
-        localStorage.removeItem("walletconnect"); 
+        localStorage.removeItem("walletconnect");
       }
+      
+      // 2. Open the modal immediately
       if (dAppConnect) {
         dAppConnect();
+      } else {
+        console.error("Connect function unavailable");
       }
     } catch (e) {
       console.error("Connect failed:", e);
     }
   };
 
-  // --- HARD DISCONNECT FIX ---
   const handleDisconnect = async () => {
     try {
       if (dAppDisconnect) {
         await dAppDisconnect();
       }
-      // Wipe storage to ensure clean state
       localStorage.removeItem("user_wallet");
       localStorage.removeItem("walletconnect");
       setAddress(null);
-      
-      toast({
-        title: "Wallet Disconnected",
-        description: "You have been logged out.",
-      });
+      toast({ title: "Disconnected", description: "Wallet disconnected successfully." });
     } catch (error) {
       console.error("Disconnect error:", error);
     }
@@ -63,7 +60,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         isConnected: !!address,
         walletAddress: address,
         anonymousId: address ? `anon-${address.slice(-4)}` : null,
-        connect: handleConnect, // Use our safe connect function
+        connect: handleConnect,
         disconnect: handleDisconnect,
       }}
     >
