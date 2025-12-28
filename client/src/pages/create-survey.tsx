@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
-import { useWallet as useVeChainWallet } from "@vechain/dapp-kit-react"; // Direct access
+// DIRECT IMPORT: Bypassing your custom context to fix the stuck button
+import { useWallet as useVeChainWallet } from "@vechain/dapp-kit-react"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +11,7 @@ import { SurveyStorage } from "@/lib/storage";
 
 export default function CreateSurvey() {
   const [, setLocation] = useLocation();
-  // We use the official hook directly to avoid any "middleman" bugs
+  // Using the official hook directly guarantees the modal opens
   const { account, connect } = useVeChainWallet();
   const { toast } = useToast();
   
@@ -21,16 +22,11 @@ export default function CreateSurvey() {
   const [questions, setQuestions] = useState([{ text: "" }]);
   const PLATFORM_FEE = 5; 
 
-  // Check connection status
   const isConnected = !!account;
 
   const handleConnectClick = () => {
-    console.log("Attempting to connect...");
-    if (connect) {
-      connect(); // This calls the library directly
-    } else {
-      alert("Wallet system not ready. Please refresh.");
-    }
+    // This calls the SDK directly. No custom logic to get stuck.
+    connect(); 
   };
   
   const handleAddQuestion = () => setQuestions([...questions, { text: "" }]);
