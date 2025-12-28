@@ -4,25 +4,23 @@ import { useWallet } from "@/lib/wallet-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Loader2, Info } from "lucide-react";
+import { Plus, Trash2, Loader2, Info, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { SurveyStorage } from "@/lib/storage"; // Import our new database
+import { SurveyStorage } from "@/lib/storage";
 
 export default function CreateSurvey() {
   const [, setLocation] = useLocation();
-  const { isConnected } = useWallet();
+  const { isConnected, connect } = useWallet(); // Get connect function
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [rewardPerUser, setRewardPerUser] = useState("10"); // Default reward
+  const [rewardPerUser, setRewardPerUser] = useState("10"); 
   const [questions, setQuestions] = useState([{ text: "" }]);
 
-  // THE FEES
-  const PLATFORM_FEE = 5; // Fee paid to YOU (The Admin)
+  const PLATFORM_FEE = 5; 
   
   const handleAddQuestion = () => setQuestions([...questions, { text: "" }]);
   
@@ -48,9 +46,7 @@ export default function CreateSurvey() {
 
     setIsLoading(true);
 
-    // Simulate Blockchain Transaction
     setTimeout(() => {
-      // 1. Save to our local database
       SurveyStorage.add({
         title,
         description,
@@ -64,9 +60,27 @@ export default function CreateSurvey() {
         title: "Survey Created!", 
         description: `Fee paid: ${PLATFORM_FEE} B3TR. Users will earn ${rewardPerUser} B3TR.` 
       });
-      setLocation("/marketplace"); // Send user to marketplace to see it
+      setLocation("/marketplace"); 
     }, 2000);
   };
+
+  // --- THE FIX: Block the form if not connected ---
+  if (!isConnected) {
+    return (
+      <div className="container max-w-2xl py-12 px-4 flex flex-col items-center text-center space-y-6">
+        <div className="bg-primary/10 p-6 rounded-full">
+          <Wallet className="h-12 w-12 text-primary" />
+        </div>
+        <h1 className="text-3xl font-bold">Connect Your Wallet</h1>
+        <p className="text-muted-foreground max-w-md">
+          You need to connect your VeChain wallet to create surveys, pay fees, and reward users on the blockchain.
+        </p>
+        <Button size="lg" onClick={connect} className="gap-2">
+          Connect Wallet to Start
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-2xl py-8 px-4">
@@ -81,7 +95,7 @@ export default function CreateSurvey() {
       <div className="space-y-6">
         <div className="space-y-2">
           <label className="text-sm font-medium">Survey Title</label>
-          <Input placeholder="E.g., Crypto Usage 2025" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input placeholder="E.g., Consumer Preferences 2025" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
         <div className="space-y-2">
